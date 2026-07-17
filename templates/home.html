@@ -155,6 +155,7 @@
             {% for product in best_sellers %}
             <div class="col-6 col-md-4 col-lg-2-4">
                 <div class="product-card">
+                    <a href="{% url 'product-detail' product.slug %}" class="text-decoration-none">
                     <div class="product-img-wrap">
                         {% if product.images.first %}
                             <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
@@ -163,6 +164,7 @@
                         {% endif %}
                         <span class="wishlist-icon"><i class="bi bi-heart"></i></span>
                     </div>
+                    </a>
                     <div class="product-info">
                         <div class="product-brand">{{ product.brand }}</div>
                         <div class="product-name">{{ product.name }}</div>
@@ -239,11 +241,7 @@ function getToken() {
     return localStorage.getItem('wildsport_token');
 }
 
-function showAlert(message, type) {
-    const box = document.getElementById('alert-box');
-    box.innerHTML = `<div class="alert alert-${type} position-fixed top-0 end-0 m-3" style="z-index:2000;">${message}</div>`;
-    setTimeout(() => { box.innerHTML = ''; }, 3000);
-}
+
 
 function addToCart(productId) {
     const token = getToken();
@@ -263,12 +261,12 @@ function addToCart(productId) {
     .then(res => res.json().then(data => ({ status: res.status, body: data })))
     .then(({ status, body }) => {
         if (status === 201) {
-            showAlert('Added to cart successfully!', 'success');
+            showToast('Added to cart successfully!', 'success');
         } else {
-            showAlert(body.error || 'Something went wrong.', 'danger');
+            showToast(body.error || 'Something went wrong.', 'danger');
         }
     })
-    .catch(() => showAlert('Network error, please try again.', 'danger'));
+    .catch(() => showToast('Network error, please try again.', 'danger'));
 }
 </script>
 

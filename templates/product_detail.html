@@ -17,7 +17,7 @@
     <span style="color: var(--text);">{{ product.name }}</span>
 </nav>
 
-    <div id="alert-box"></div>
+    
 
     <div class="row g-5">
 
@@ -172,11 +172,7 @@ function getToken() {
     return localStorage.getItem('wildsport_token');   // login page banate waqt token yahi save karenge
 }
 
-function showAlert(message, type) {
-    const box = document.getElementById('alert-box');
-    box.innerHTML = `<div class="alert alert-${type} mt-2">${message}</div>`;
-    setTimeout(() => { box.innerHTML = ''; }, 3000);
-}
+
 
 function addToCart(productId) {
     const token = getToken();
@@ -187,7 +183,7 @@ function addToCart(productId) {
 
     const sizeSelectorExists = document.getElementById('sizeSelector');
     if (sizeSelectorExists && !selectedSize) {
-        showAlert('Please select a size first.', 'warning');
+        showToast('Please select a size first.', 'warning');
         return;
     }
 
@@ -208,12 +204,12 @@ function addToCart(productId) {
     .then(res => res.json().then(data => ({ status: res.status, body: data })))
     .then(({ status, body }) => {
         if (status === 201) {
-            showAlert('Added to cart successfully!', 'success');
+            showToast('Added to cart successfully!', 'success');
         } else {
-            showAlert(body.error || 'Something went wrong.', 'danger');
+            showToast(body.error || 'Something went wrong.', 'danger');
         }
     })
-    .catch(() => showAlert('Network error, please try again.', 'danger'));
+    .catch(() => showToast('Network error, please try again.', 'danger'));
 }
 </script>
 

@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - WildSport{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Breadcrumb -->
+<nav class="small-text mb-3">
+    <a href="{% url 'home' %}" style="color:#6B7280;">Home</a> /
+    {% with cat=product.categories.first %}
+    {% if cat %}
+    <a href="{% url 'product-listing' %}?category={{ cat.slug }}" style="color:#6B7280;">{{ cat.name }}</a> /
+    {% endif %}
+    {% endwith %}
+    <span style="color: var(--text);">{{ product.name }}</span>
+</nav>
+
+    <div id="alert-box"></div>
+
+    <div class="row g-5">
+
+        <!-- Product Images -->
+        <div class="col-lg-5">
+            
+            <div class="detail-main-img mb-3">
+                {% if product.images.first %}
+                    <img id="mainImage" src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                {% else %}
+                    <img id="mainImage" src="https://via.placeholder.com/500x500?text=No+Image" alt="No image">
+                {% endif %}
+            </div>
+            {% if product.images.count > 1 %}
+            <div class="d-flex gap-2">
+                {% for img in product.images.all %}
+                <div class="thumb-img" onclick="document.getElementById('mainImage').src='{{ img.image.url }}'">
+                    <img src="{{ img.image.url }}" alt="thumb">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Product Info -->
+        <div class="col-lg-7">
+            
+            <div class="small-text mb-2" style="color: var(--secondary); font-weight: 600;">{{ product.brand }}</div>
+            <h1 style="font-size: 28px;">{{ product.name }}</h1>
+
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="product-rating" style="font-size: 15px;">
+                    <i class="bi bi-star-fill"></i> {{ product.rating_avg }}
+                </span>
+                <span class="small-text">{{ product.stock }} in stock</span>
+            </div>
+
+            <div class="product-price-row mb-3" style="font-size: 24px;">
+                <span class="price" id="unitPrice" data-price="{{ product.discount_price|default:product.price }}" style="font-size: 28px;">₹{{ product.discount_price|default:product.price }}</span>
+                {% if product.discount_price %}
+                <span class="product-price-old" style="font-size: 18px;">₹{{ product.price }}</span>
+                <span class="product-discount-percent" style="font-size: 15px;">
+                    {% widthratio product.discount_price product.price 100 as percent %}
+                    {{ percent|add:"-100"|cut:"-" }}% OFF
+                </span>
+                {% endif %}
+            </div>
+
+            <p class="body-text mb-4" style="color: #4B5563;">{{ product.description }}</p>
+
+            <hr>
+                            <!-- Size Selector (sirf tab dikhega jab product ke sizes ho) -->
+                {% if product.size_type != 'none' and product.available_sizes %}
+                <div class="mb-4">
+                    <label class="h4-style mb-2 d-block">
+                        {% if product.size_type == 'clothing' %}Select Size{% else %}Select Shoe Size{% endif %}
+                    </label>
+                    <div class="size-selector d-flex gap-2 flex-wrap" id="sizeSelector">
+                    
+                        {% for size in sizes_list %}
+                        <button type="button" class="size-btn" data-size="{{ size }}" onclick="selectSize(this)">{{ size }}</button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+            <!-- Quantity Selector -->
+            <div class="d-flex align-items-center gap-3 mb-4 mt-3">
+                <label class="h4-style mb-0">Quantity:</label>
+                <div class="qty-selector">
+                    <button type="button" onclick="changeQty(-1)">−</button>
+                    <input type="number" id="qtyInput" value="1" min="1" max="{{ product.stock }}" readonly>
+                    <button type="button" onclick="changeQty(1)">+</button>
+                </div>
+            </div>
+            <p class="small-text mb-4">Total: <strong id="totalPrice" class="price">₹{{ product.discount_price|default:product.price }}</strong></p>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-3 mb-4">
+                <button class="btn-primary-custom flex-grow-1" style="background: var(--secondary);" onclick="addToCart({{ product.id }})">
+                    <i class="bi bi-cart3"></i> ADD TO CART
+                </button>
+                <button class="btn-wishlist-detail"><i class="bi bi-heart"></i></button>
+            </div>
+
+            <!-- Trust info -->
+            <div class="detail-trust-row">
+                <div><i class="bi bi-truck"></i> Free Shipping above ₹999</div>
+                <div><i class="bi bi-arrow-return-left"></i> 7 Day Easy Returns</div>
+                <div><i class="bi bi-shield-check"></i> 100% Authentic</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <section>
+        <h2 class="mb-4">You May Also Like</h2>
+        <div class="row g-4">
+            {% for rp in related_products %}
+            <div class="col-6 col-md-3">
+                <div class="product-card">
+                    <a href="{% url 'product-detail' rp.slug %}" class="text-decoration-none">
+                        <div class="product-img-wrap">
+                            {% if rp.images.first %}
+                                <img src="{{ rp.images.first.image.url }}" alt="{{ rp.name }}">
+                            {% else %}
+                                <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                            {% endif %}
+                        </div>
+                        <div class="product-info">
+                            <div class="product-brand">{{ rp.brand }}</div>
+                            <div class="product-name">{{ rp.name }}</div>
+                            <div class="product-price-row">
+                                <span class="price product-price-current">₹{{ rp.discount_price|default:rp.price }}</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+</div>
+
+<!-- JS: Quantity + Add to Cart -->
+<script>
+
+let selectedSize = null;
+
+function selectSize(btn) {
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedSize = btn.dataset.size;
+}
+
+function changeQty(delta) {
+    const input = document.getElementById('qtyInput');
+    let val = parseInt(input.value) + delta;
+    const max = parseInt(input.max);
+    if (val < 1) val = 1;
+    if (val > max) val = max;
+    input.value = val;
+
+    const unitPrice = parseFloat(document.getElementById('unitPrice').dataset.price);
+    document.getElementById('totalPrice').textContent = '₹' + (unitPrice * val).toFixed(2);
+}
+
+function getToken() {
+    return localStorage.getItem('wildsport_token');   // login page banate waqt token yahi save karenge
+}
+
+function showAlert(message, type) {
+    const box = document.getElementById('alert-box');
+    box.innerHTML = `<div class="alert alert-${type} mt-2">${message}</div>`;
+    setTimeout(() => { box.innerHTML = ''; }, 3000);
+}
+
+function addToCart(productId) {
+    const token = getToken();
+    if (!token) {
+        openAuthModal();   
+        return;
+    }
+
+    const sizeSelectorExists = document.getElementById('sizeSelector');
+    if (sizeSelectorExists && !selectedSize) {
+        showAlert('Please select a size first.', 'warning');
+        return;
+    }
+
+    const quantity = document.getElementById('qtyInput').value;
+
+    fetch('/api/cart/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + token
+        },
+        body: JSON.stringify({
+            product: productId,
+            quantity: parseInt(quantity),
+            selected_size: selectedSize
+        })
+    })
+    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+    .then(({ status, body }) => {
+        if (status === 201) {
+            showAlert('Added to cart successfully!', 'success');
+        } else {
+            showAlert(body.error || 'Something went wrong.', 'danger');
+        }
+    })
+    .catch(() => showAlert('Network error, please try again.', 'danger'));
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - WildSport{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+
+    <h1 class="mb-4">Checkout</h1>
+    <div id="alert-box"></div>
+
+    <div id="checkout-loading" class="text-center py-5">
+        <div class="spinner-border" style="color: var(--primary);"></div>
+        <p class="mt-2 small-text">Loading your cart...</p>
+    </div>
+
+    <div id="checkout-empty" style="display:none;" class="text-center py-5">
+        <i class="bi bi-cart-x" style="font-size: 50px; color: var(--border);"></i>
+        <h3 class="mt-3">Your cart is empty</h3>
+        <p class="small-text">Add some products before checking out.</p>
+        <a href="{% url 'product-listing' %}" class="btn-primary-custom">Start Shopping</a>
+    </div>
+
+    <div id="checkout-content" style="display:none;">
+        <div class="row g-4">
+
+            <!-- Address Section -->
+            <div class="col-lg-7">
+                <div class="checkout-box">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">Delivery Address</h4>
+                        <button class="btn-add-address" onclick="toggleNewAddressForm()" type="button">
+                            <i class="bi bi-plus-circle"></i> Add New Address
+                        </button>
+                    </div>
+
+                    <div id="address-list"></div>
+
+                    <div id="no-address-msg" style="display:none;" class="small-text py-3">
+                        No saved addresses yet. Click "Add New Address" to add one.
+                    </div>
+
+                    <!-- New Address Form (hidden by default) -->
+                    <div id="new-address-form" style="display:none;" class="new-address-box mt-3">
+                        <h4 class="h4-style mb-3">New Address</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="h4-style">Full Name</label>
+                                <input type="text" id="addr-fullname" class="form-control" placeholder="Full name">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="h4-style">Phone</label>
+                                <input type="text" id="addr-phone" class="form-control" placeholder="Phone number">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="h4-style">Full Address</label>
+                            <textarea id="addr-full" class="form-control" rows="2" placeholder="House no, Street, Landmark"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="h4-style">City</label>
+                                <input type="text" id="addr-city" class="form-control" placeholder="City">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="h4-style">State</label>
+                                <input type="text" id="addr-state" class="form-control" placeholder="State">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="h4-style">Pincode</label>
+                                <input type="text" id="addr-pincode" class="form-control" placeholder="Pincode">
+                            </div>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="addr-default">
+                            <label class="form-check-label small-text" for="addr-default">Set as default address</label>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn-primary-custom" onclick="saveNewAddress()" type="button">Save Address</button>
+                            <button class="btn-cancel-address" onclick="toggleNewAddressForm()" type="button">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-box mt-4">
+                    <h4 class="mb-3">Payment Method</h4>
+                    <div class="payment-option-selected">
+                        <i class="bi bi-cash-coin"></i>
+                        <div>
+                            <strong>Cash on Delivery</strong>
+                            <p class="small-text mb-0">Pay when your order arrives</p>
+                        </div>
+                        <i class="bi bi-check-circle-fill ms-auto" style="color: var(--accent); font-size: 20px;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="col-lg-5">
+                <div class="checkout-box">
+                    <h4 class="mb-3">Order Summary</h4>
+                    <div id="checkout-items-list" class="mb-3"></div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2 small-text">
+                        <span>Subtotal</span>
+                        <span>₹<span id="summary-subtotal">0</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small-text">
+                        <span>Delivery</span>
+                        <span style="color: var(--accent);">FREE</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Total</strong>
+                        <strong class="price" style="font-size:20px;">₹<span id="summary-total">0</span></strong>
+                    </div>
+                    <button class="btn-primary-custom w-100" onclick="placeOrder()" id="placeOrderBtn">PLACE ORDER (COD)</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function getToken() { return localStorage.getItem('wildsport_token'); }
+
+function showAlert(message, type) {
+    const box = document.getElementById('alert-box');
+    box.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    setTimeout(() => { box.innerHTML = ''; }, 4000);
+}
+
+let selectedAddressId = null;
+
+// ---------------- LOAD CART ----------------
+function loadCheckout() {
+    const token = getToken();
+    if (!token) {
+        showAlert('Please login to continue checkout.', 'warning');
+        setTimeout(openAuthModal, 500);
+        document.getElementById('checkout-loading').style.display = 'none';
+        return;
+    }
+
+    fetch('/api/cart/', { headers: { 'Authorization': 'Token ' + token } })
+    .then(res => res.json())
+    .then(cart => {
+        document.getElementById('checkout-loading').style.display = 'none';
+
+        if (!cart.items || cart.items.length === 0) {
+            document.getElementById('checkout-empty').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('checkout-content').style.display = 'block';
+        renderCheckoutItems(cart.items);
+        document.getElementById('summary-subtotal').textContent = cart.total_price;
+        document.getElementById('summary-total').textContent = cart.total_price;
+
+        loadAddresses();
+    })
+    .catch(() => {
+        document.getElementById('checkout-loading').style.display = 'none';
+        showAlert('Failed to load cart.', 'danger');
+    });
+}
+
+function renderCheckoutItems(items) {
+    const container = document.getElementById('checkout-items-list');
+    container.innerHTML = items.map(item => {
+        const product = item.product_detail;
+        const imgUrl = (product.images && product.images.length > 0) ? product.images[0].image : 'https://via.placeholder.com/60x60?text=No+Image';
+        return `
+        <div class="checkout-item-row">
+            <img src="${imgUrl}" alt="${product.name}">
+            <div class="flex-grow-1">
+                <div class="small-text" style="font-weight:500; color: var(--text);">${product.name}</div>
+                <div class="small-text">Qty: ${item.quantity}</div>
+            </div>
+            <div class="price small-text">₹${item.subtotal}</div>
+        </div>`;
+    }).join('');
+}
+
+// ---------------- ADDRESSES ----------------
+function loadAddresses() {
+    fetch('/api/auth/addresses/', { headers: { 'Authorization': 'Token ' + getToken() } })
+    .then(res => res.json())
+    .then(addresses => {
+        const container = document.getElementById('address-list');
+        const noAddrMsg = document.getElementById('no-address-msg');
+
+        if (!addresses || addresses.length === 0) {
+            container.innerHTML = '';
+            noAddrMsg.style.display = 'block';
+            return;
+        }
+
+        noAddrMsg.style.display = 'none';
+
+        // default address ko pehle select karo, warna pehla wala
+        const defaultAddr = addresses.find(a => a.is_default) || addresses[0];
+        selectedAddressId = defaultAddr.id;
+
+        container.innerHTML = addresses.map(addr => `
+            <div class="address-card ${addr.id === selectedAddressId ? 'selected' : ''}" id="addr-card-${addr.id}" onclick="selectAddress(${addr.id})">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>${addr.full_name}</strong>
+                        ${addr.is_default ? '<span class="default-badge">Default</span>' : ''}
+                        <p class="small-text mb-1 mt-1">${addr.address_line}, ${addr.city}, ${addr.state} - ${addr.pincode}</p>
+                        <p class="small-text mb-0">Phone: ${addr.phone}</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi ${addr.id === selectedAddressId ? 'bi-check-circle-fill' : 'bi-circle'}" id="radio-${addr.id}" style="color: var(--primary); font-size: 20px;"></i>
+                        <button class="delete-addr-btn" onclick="event.stopPropagation(); deleteAddress(${addr.id})"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    })
+    .catch(() => showAlert('Failed to load addresses.', 'danger'));
+}
+
+function selectAddress(id) {
+    document.querySelectorAll('.address-card').forEach(card => card.classList.remove('selected'));
+    document.querySelectorAll('[id^="radio-"]').forEach(icon => {
+        icon.classList.remove('bi-check-circle-fill');
+        icon.classList.add('bi-circle');
+    });
+
+    document.getElementById('addr-card-' + id).classList.add('selected');
+    const radio = document.getElementById('radio-' + id);
+    radio.classList.remove('bi-circle');
+    radio.classList.add('bi-check-circle-fill');
+
+    selectedAddressId = id;
+}
+
+function toggleNewAddressForm() {
+    const form = document.getElementById('new-address-form');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function saveNewAddress() {
+    const full_name = document.getElementById('addr-fullname').value.trim();
+    const phone = document.getElementById('addr-phone').value.trim();
+    const address_line = document.getElementById('addr-full').value.trim();
+    const city = document.getElementById('addr-city').value.trim();
+    const state = document.getElementById('addr-state').value.trim();
+    const pincode = document.getElementById('addr-pincode').value.trim();
+    const is_default = document.getElementById('addr-default').checked;
+
+    if (!full_name || !phone || !address_line || !city || !state || !pincode) {
+        showAlert('Please fill in all address fields.', 'warning');
+        return;
+    }
+
+    fetch('/api/auth/addresses/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + getToken()
+        },
+        body: JSON.stringify({ full_name, phone, address_line, city, state, pincode, is_default })
+    })
+    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+    .then(({ status, body }) => {
+        if (status === 201) {
+            showAlert('Address saved!', 'success');
+            document.getElementById('new-address-form').style.display = 'none';
+            // form clear karo
+            ['addr-fullname','addr-phone','addr-full','addr-city','addr-state','addr-pincode'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('addr-default').checked = false;
+            loadAddresses();
+        } else {
+            showAlert('Could not save address.', 'danger');
+        }
+    })
+    .catch(() => showAlert('Network error, please try again.', 'danger'));
+}
+
+function deleteAddress(id) {
+    if (!confirm('Delete this address?')) return;
+
+    fetch(`/api/auth/addresses/${id}/`, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Token ' + getToken() }
+    })
+    .then(res => {
+        if (res.status === 204) {
+            showAlert('Address deleted.', 'success');
+            loadAddresses();
+        } else {
+            showAlert('Could not delete address.', 'danger');
+        }
+    });
+}
+
+// ---------------- PLACE ORDER ----------------
+function placeOrder() {
+    if (!selectedAddressId) {
+        showAlert('Please select or add a delivery address.', 'warning');
+        return;
+    }
+
+    // selected address ka full data DOM se nikal lo
+    const card = document.getElementById('addr-card-' + selectedAddressId);
+    const addressText = card.querySelector('p:first-of-type').textContent;
+    const phoneText = card.querySelector('p:last-of-type').textContent;
+    const nameText = card.querySelector('strong').textContent;
+
+    const fullAddress = `${nameText}, ${addressText} | ${phoneText}`;
+
+    const btn = document.getElementById('placeOrderBtn');
+    btn.disabled = true;
+    btn.textContent = 'Placing order...';
+
+    fetch('/api/orders/checkout/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + getToken()
+        },
+        body: JSON.stringify({ shipping_address: fullAddress, payment_method: 'COD' })
+    })
+    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+    .then(({ status, body }) => {
+        if (status === 201) {
+            showAlert('Order placed successfully! Redirecting...', 'success');
+            setTimeout(() => { window.location.href = '/orders/' + body.id + '/'; }, 1500);
+        } else {
+            showAlert(body.error || 'Could not place order.', 'danger');
+            btn.disabled = false;
+            btn.textContent = 'PLACE ORDER (COD)';
+        }
+    })
+    .catch(() => {
+        showAlert('Network error, please try again.', 'danger');
+        btn.disabled = false;
+        btn.textContent = 'PLACE ORDER (COD)';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadCheckout);
+</script>
+{% endblock %}

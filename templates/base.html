@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WildSport - From Stadium to Summit{% endblock %}</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% load static %}{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <!-- Top Utility Bar -->
+    <div class="top-bar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-truck"></i> Free Delivery on orders above ₹999</span>
+            <div class="top-bar-links">
+                <a href="#"><i class="bi bi-geo-alt"></i> Track Order</a>
+                <a href="#"><i class="bi bi-headset"></i> Help & Support</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white main-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'home' %}">
+            <img src="{% static 'images/logo.webp' %}" alt="WildSport Logo" class="site-logo">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#mainNavCollapse" aria-controls="mainNavCollapse"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavCollapse">
+            <form class="search-form d-flex mt-3 mt-lg-0" method="get" action="{% url 'product-listing' %}">
+                <input type="text" name="search" class="form-control" placeholder="Search for products, brands and more...">
+                <button type="submit"><i class="bi bi-search"></i></button>
+            </form>
+
+            <div class="nav-icons d-flex flex-column flex-lg-row align-items-start align-items-lg-center mt-3 mt-lg-0">
+                <a href="#" class="nav-icon-link"><i class="bi bi-heart"></i> Wishlist</a>
+                <a href="{% url 'cart' %}" class="nav-icon-link"><i class="bi bi-cart3"></i> Cart</a>
+                <a href="{% url 'order-history' %}" class="nav-icon-link"><i class="bi bi-bag-check"></i> My Orders</a>
+                <a href="javascript:void(0)" class="nav-icon-link" id="account-link-guest" data-bs-toggle="modal" data-bs-target="#authModal">
+                    <i class="bi bi-person"></i> Account
+                </a>
+
+                <div class="dropdown" id="account-link-user" style="display:none;">
+                    <a href="javascript:void(0)" class="nav-icon-link" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person"></i> <span id="account-text"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end account-dropdown">
+                        <li><a class="dropdown-item" href="{% url 'profile-page' %}"><i class="bi bi-person-circle"></i> My Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'order-history' %}"><i class="bi bi-bag-check"></i> My Orders</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="logoutUser()"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+    <!-- Category Nav -->
+    <div class="category-nav">
+        <div class="container d-flex align-items-center">
+            <button class="all-categories-btn"><i class="bi bi-list"></i> All Categories</button>
+            <ul class="category-links">
+                <li><a href="#">Men</a></li>
+                <li><a href="#">Women</a></li>
+                <li><a href="#">Kids</a></li>
+                <li><a href="#">Sports</a></li>
+                <li><a href="#">Outdoor Adventure</a></li>
+                <li><a href="#">Camping</a></li>
+                <li><a href="#">Brands</a></li>
+                <li><a href="#" class="text-sale">Sale</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Page Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Login/Register Modal -->
+<div class="modal fade" id="authModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content auth-modal-content">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 pb-4">
+
+                <ul class="nav nav-tabs auth-tabs mb-4" id="authTabs">
+                    <li class="nav-item flex-grow-1">
+                        <button class="nav-link active w-100" id="login-tab" onclick="switchTab('login')" type="button">Login</button>
+                    </li>
+                    <li class="nav-item flex-grow-1">
+                        <button class="nav-link w-100" id="register-tab" onclick="switchTab('register')" type="button">Register</button>
+                    </li>
+                </ul>
+
+                <div id="alert-box"></div>
+
+                <!-- Login Form -->
+                <div id="login-form">
+                    <h3 class="mb-3">Welcome Back</h3>
+                    <div class="mb-3">
+                        <label class="h4-style">Username</label>
+                        <input type="text" id="login-username" class="form-control" placeholder="Enter username">
+                    </div>
+                    <div class="mb-3">
+                        <label class="h4-style">Password</label>
+                        <input type="password" id="login-password" class="form-control" placeholder="Enter password">
+                    </div>
+                    <button class="btn-primary-custom w-100" onclick="loginUser()" type="button">LOGIN</button>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-form" style="display:none;">
+                    <h3 class="mb-3">Create Account</h3>
+                    <div class="mb-3">
+                        <label class="h4-style">Username</label>
+                        <input type="text" id="reg-username" class="form-control" placeholder="Choose a username">
+                    </div>
+                    <div class="mb-3">
+                        <label class="h4-style">Email</label>
+                        <input type="email" id="reg-email" class="form-control" placeholder="Enter email">
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="h4-style">First Name</label>
+                            <input type="text" id="reg-firstname" class="form-control" placeholder="First name">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="h4-style">Last Name</label>
+                            <input type="text" id="reg-lastname" class="form-control" placeholder="Last name">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="h4-style">Password</label>
+                        <input type="password" id="reg-password" class="form-control" placeholder="Create a password (min 6 chars)">
+                    </div>
+                    <button class="btn-primary-custom w-100" onclick="registerUser()" type="button">CREATE ACCOUNT</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="footer-logo">WILDSPORT</h5>
+                    <p class="footer-tagline">FROM STADIUM TO SUMMIT</p>
+                    <p>Your one-stop destination for sports and adventure gear.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="bi bi-facebook"></i></a>
+                        <a href="#"><i class="bi bi-instagram"></i></a>
+                        <a href="#"><i class="bi bi-youtube"></i></a>
+                        <a href="#"><i class="bi bi-twitter"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Shop</h6>
+                    <ul>
+                        <li><a href="#">Men</a></li>
+                        <li><a href="#">Women</a></li>
+                        <li><a href="#">Kids</a></li>
+                        <li><a href="#">Sports</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Customer Service</h6>
+                    <ul>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Track Order</a></li>
+                        <li><a href="#">Returns & Refunds</a></li>
+                        <li><a href="#">FAQs</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h6>Company</h6>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Store Locator</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h6>Newsletter</h6>
+                    <p>Subscribe to get special offers and updates.</p>
+                    <form class="newsletter-form d-flex">
+                        <input type="email" class="form-control" placeholder="Enter your email">
+                        <button type="submit" class="btn-newsletter">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <p class="mb-0">&copy; 2026 WildSport. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+window.addEventListener('DOMContentLoaded', function() {
+    const token = localStorage.getItem('wildsport_token');
+    const username = localStorage.getItem('wildsport_username');
+
+    if (token && username) {
+        document.getElementById('account-link-guest').style.display = 'none';
+        document.getElementById('account-link-user').style.display = 'block';
+        document.getElementById('account-text').textContent = username;
+    }
+});
+
+function logoutUser() {
+    if (confirm('Logout from WildSport?')) {
+        localStorage.removeItem('wildsport_token');
+        localStorage.removeItem('wildsport_username');
+        window.location.href = "{% url 'home' %}";
+    }
+}
+
+function switchTab(tab) {
+    document.getElementById('login-tab').classList.toggle('active', tab === 'login');
+    document.getElementById('register-tab').classList.toggle('active', tab === 'register');
+    document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+function showAlert(message, type) {
+    document.getElementById('alert-box').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+}
+
+function loginUser() {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+
+    if (!username || !password) {
+        showAlert('Please fill all fields.', 'warning');
+        return;
+    }
+
+    fetch('/api/auth/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+    .then(({ status, body }) => {
+        if (status === 200) {
+            localStorage.setItem('wildsport_token', body.token);
+            localStorage.setItem('wildsport_username', body.user.username);
+            showAlert('Login successful!', 'success');
+            setTimeout(() => { window.location.reload(); }, 800);
+        } else {
+            showAlert(body.error || 'Invalid credentials.', 'danger');
+        }
+    })
+    .catch(() => showAlert('Network error, please try again.', 'danger'));
+}
+
+function registerUser() {
+    const username = document.getElementById('reg-username').value;
+    const email = document.getElementById('reg-email').value;
+    const first_name = document.getElementById('reg-firstname').value;
+    const last_name = document.getElementById('reg-lastname').value;
+    const password = document.getElementById('reg-password').value;
+
+    if (!username || !password) {
+        showAlert('Username and password are required.', 'warning');
+        return;
+    }
+    if (password.length < 6) {
+        showAlert('Password must be at least 6 characters.', 'warning');
+        return;
+    }
+
+    fetch('/api/auth/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, first_name, last_name, password })
+    })
+    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+    .then(({ status, body }) => {
+        if (status === 201) {
+            localStorage.setItem('wildsport_token', body.token);
+            localStorage.setItem('wildsport_username', body.user.username);
+            showAlert('Account created!', 'success');
+            setTimeout(() => { window.location.reload(); }, 800);
+        } else {
+            const firstError = Object.values(body)[0];
+            showAlert(Array.isArray(firstError) ? firstError[0] : 'Registration failed.', 'danger');
+        }
+    })
+    .catch(() => showAlert('Network error, please try again.', 'danger'));
+}
+
+function openAuthModal() {
+    const modal = new bootstrap.Modal(document.getElementById('authModal'));
+    modal.show();
+}
+</script>
+</body>
+</html>

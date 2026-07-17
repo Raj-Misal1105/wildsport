@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}WildSport - Gear Up. Get Out.{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <div class="row g-4">
+
+        <!-- Hero Section -->
+        <div class="col-lg-8">
+            <div class="hero-section" style="background-image: url('https://images.unsplash.com/photo-1551632811-561732d1e306?w=1200');">
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <h1>GEAR UP.<br>GET OUT.</h1>
+                    <p>Top Quality Gear for Sports and Adventure.</p>
+                    <div class="hero-btns d-flex flex-wrap gap-2">
+                        <a href="#" class="btn-primary-custom">SHOP NOW</a>
+                        <a href="#" class="btn-secondary-custom">EXPLORE ADVENTURE</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Side promo cards -->
+        <div class="col-lg-4">
+            <div class="row g-3 h-100">
+                <div class="col-12" >
+                    <div class="promo-mini" style="background-color: var(--primary); border-radius: 8px; padding: 20px; color: #fff; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                        <span class="small-text" style="color:#fff; text-transform:uppercase;">Upto</span>
+                        <h3 style="color:#fff;">40% OFF</h3>
+                        <p class="small-text" style="color:#E5E7EB;">On Sports Shoes</p>
+                    </div>
+                </div>
+                <div class="col-12" >
+                    <div class="promo-mini" style="background-color: var(--secondary); border-radius: 8px; padding: 20px; color: #fff; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                        <h4 style="color:#fff;">CAMPING ESSENTIALS</h4>
+                        <p class="small-text" style="color:#E5E7EB;">For Your Next Trip</p>
+                    </div>
+                </div>
+                <div class="col-12" >
+                    <div class="promo-mini" style="background-color: var(--cta); border-radius: 8px; padding: 20px; color: #fff; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                        <span class="small-text" style="color:#fff;">NEW</span>
+                        <h4 style="color:#fff;">NEW ARRIVALS</h4>
+                        <p class="small-text" style="color:#fff;">Explore The Latest Gear</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Shop by Category -->
+<section>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Shop by Category</h2>
+            <a href="{% url 'product-listing' %}"  class="view-all-link">View All Categories &rarr;</a>
+        </div>
+        <div class="row g-3">
+           {% for cat in categories %}
+            <div class="col-6 col-md-3 col-lg-2">
+                <a href="{% url 'product-listing' %}?category={{ cat.slug }}" class="text-decoration-none">
+                    <div class="cat-card">
+                        <div class="cat-icon-wrap">
+                            {% if cat.icon %}
+                                <img src="{{ cat.icon.url }}" alt="{{ cat.name }}">
+                            {% else %}
+                                <i class="bi bi-tag"></i>
+                            {% endif %}
+                        </div>
+                        <span>{{ cat.name }}</span>
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <p class="small-text">Koi category abhi tak add nahi hui.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Top Picks -->
+<section class="pt-0">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Top Picks For You</h2>
+            <a href="{% url 'product-listing' %}" class="view-all-link">View All &rarr;</a>
+        </div>
+        <div class="row g-4 product-grid-row">
+            {% for product in top_picks %}
+            <div class="col-6 col-md-4 col-lg-2-4">
+                <div class="product-card">
+                    <div class="product-img-wrap">
+                        {% if product.images.first %}
+                          <a href="{% url 'product-detail' product.slug %}" class="text-decoration-none">  <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}"></a>
+                        {% else %}
+                            <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                        {% endif %}
+                        <span class="wishlist-icon"><i class="bi bi-heart"></i></span>
+                        {% if product.discount_price %}
+                        <span class="discount-badge">
+                            {% widthratio product.discount_price product.price 100 as percent %}
+                            {{ percent|add:"-100"|cut:"-" }}% OFF
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="product-info">
+                        <a href="{% url 'product-detail' product.slug %}" class="text-decoration-none">
+                            <div class="product-brand">{{ product.brand }}</div>
+                            <div class="product-name">{{ product.name }}</div>
+                        </a>
+                        <div class="product-rating">
+                            <i class="bi bi-star-fill"></i> {{ product.rating_avg }}
+                        </div>
+                        <div class="product-price-row">
+                            <span class="price product-price-current">₹{{ product.discount_price|default:product.price }}</span>
+                            {% if product.discount_price %}
+                            <span class="product-price-old">₹{{ product.price }}</span>
+                            {% endif %}
+                        </div>
+                        <button class="btn-cart-custom" onclick="addToCart({{ product.id }})">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="small-text">Koi product abhi tak add nahi hua.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Trust Badges -->
+<section class="pt-0">
+    <div class="container">
+        <div class="row text-center g-4" style="border-top: 1px solid var(--border); padding-top: 32px;">
+            <div class="col-6 col-md-3"><div class="trust-badge"><i class="bi bi-patch-check"></i><span>100% Authentic</span></div></div>
+            <div class="col-6 col-md-3"><div class="trust-badge"><i class="bi bi-arrow-return-left"></i><span>Easy Returns</span></div></div>
+            <div class="col-6 col-md-3"><div class="trust-badge"><i class="bi bi-truck"></i><span>Free Shipping</span></div></div>
+            <div class="col-6 col-md-3"><div class="trust-badge"><i class="bi bi-shield-check"></i><span>Secure Payments</span></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- Best Sellers -->
+<section class="pt-0">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Best Sellers</h2>
+            <a href="{% url 'product-listing' %}" class="view-all-link">View All &rarr;</a>
+        </div>
+        <div class="row g-4 product-grid-row">
+            {% for product in best_sellers %}
+            <div class="col-6 col-md-4 col-lg-2-4">
+                <div class="product-card">
+                    <div class="product-img-wrap">
+                        {% if product.images.first %}
+                            <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                        {% endif %}
+                        <span class="wishlist-icon"><i class="bi bi-heart"></i></span>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-brand">{{ product.brand }}</div>
+                        <div class="product-name">{{ product.name }}</div>
+                        <div class="product-rating"><i class="bi bi-star-fill"></i> {{ product.rating_avg }}</div>
+                        <div class="product-price-row">
+                            <span class="price product-price-current">₹{{ product.discount_price|default:product.price }}</span>
+                        </div>
+                        <button class="btn-cart-custom" onclick="addToCart({{ product.id }})">Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="small-text">Abhi koi best seller product nahi hai.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Promo Banner -->
+<section class="pt-0">
+    <div class="container">
+        <div class="promo-banner" style="background-image: url('https://images.unsplash.com/photo-1533240332313-0db49b459ad6?w=1200');">
+            <div class="promo-banner-content">
+                <h2 style="color:#fff;">ADVENTURE IS CALLING</h2>
+                <p>Find the perfect gear for your next adventure.</p>
+                <a href="#" class="btn-primary-custom">EXPLORE NOW</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="pt-0">
+    <div class="container">
+        <h2 class="mb-4">What Our Customers Say</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                    <p class="small-text">Amazing quality products and super fast delivery. WildSport is now my go-to store for all sports gear!</p>
+                    <div class="d-flex align-items-center gap-2 mt-3">
+                        <div class="testimonial-avatar">R</div>
+                        <strong style="font-size:14px;">Rahul Sharma</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                    <p class="small-text">Loved the trekking collection. Everything I needed for my trip was available at one place.</p>
+                    <div class="d-flex align-items-center gap-2 mt-3">
+                        <div class="testimonial-avatar">S</div>
+                        <strong style="font-size:14px;">Sneha Iyer</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                    <p class="small-text">Best prices and authentic products. Highly recommended!</p>
+                    <div class="d-flex align-items-center gap-2 mt-3">
+                        <div class="testimonial-avatar">A</div>
+                        <strong style="font-size:14px;">Aman Verma</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<div id="alert-box"></div>
+
+<script>
+function getToken() {
+    return localStorage.getItem('wildsport_token');
+}
+
+function showAlert(message, type) {
+    const box = document.getElementById('alert-box');
+    box.innerHTML = `<div class="alert alert-${type} position-fixed top-0 end-0 m-3" style="z-index:2000;">${message}</div>`;
+    setTimeout(() => { box.innerHTML = ''; }, 3000);
+}
+
+function addToCart(productId) {
+    const token = getToken();
+    if (!token) {
+        openAuthModal();
+        return;
+    }
+
+    fetch('/api/cart/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + token
+        },
+        body: JSON.stringify({ product: productId, quantity: 1 })
+    })
+    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+    .then(({ status, body }) => {
+        if (status === 201) {
+            showAlert('Added to cart successfully!', 'success');
+        } else {
+            showAlert(body.error || 'Something went wrong.', 'danger');
+        }
+    })
+    .catch(() => showAlert('Network error, please try again.', 'danger'));
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}{% if category %}Edit{% else %}Add{% endif %} Category{% endblock %}
+{% block page_title %}{% if category %}Edit{% else %}Add New{% endif %} Category{% endblock %}
+
+{% block dash_content %}
+<div class="dash-box" style="max-width: 500px;">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="h4-style">Category Name</label>
+            <input type="text" name="name" class="form-control" value="{{ category.name|default:'' }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="h4-style">Icon Image (optional)</label>
+            <input type="file" name="icon" class="form-control">
+            {% if category.icon %}<img src="{{ category.icon.url }}" class="dash-thumb mt-2">{% endif %}
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if category.is_active or not category %}checked{% endif %}>
+            <label class="form-check-label small-text" for="is_active">Active</label>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn-primary-custom">{% if category %}Update{% else %}Save{% endif %} Category</button>
+            <a href="{% url 'dashboard-category-list' %}" class="btn-cancel-address">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

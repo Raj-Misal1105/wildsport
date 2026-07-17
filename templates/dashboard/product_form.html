@@ -1,0 +1,100 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}{% if product %}Edit{% else %}Add{% endif %} Product{% endblock %}
+{% block page_title %}{% if product %}Edit{% else %}Add New{% endif %} Product{% endblock %}
+
+{% block dash_content %}
+<div class="dash-box" style="max-width: 700px;">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="h4-style">Category</label>
+                
+                    {% for cat in categories %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="categories" value="{{ cat.id }}"
+                                {% if cat in product.categories.all %}checked{% endif %}>
+                            <label class="form-check-label">{{ cat.name }}</label>
+                        </div>
+                        {% endfor %}
+             
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="h4-style">Brand</label>
+                <input type="text" name="brand" class="form-control" value="{{ product.brand|default:'' }}">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="h4-style">Product Name</label>
+            <input type="text" name="name" class="form-control" value="{{ product.name|default:'' }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="h4-style">Description</label>
+            <textarea name="description" class="form-control" rows="3">{{ product.description|default:'' }}</textarea>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="h4-style">Price (₹)</label>
+                <input type="number" step="0.01" name="price" class="form-control" value="{{ product.price|default:'' }}" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="h4-style">Discount Price (₹)</label>
+                <input type="number" step="0.01" name="discount_price" class="form-control" value="{{ product.discount_price|default:'' }}">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="h4-style">Stock</label>
+                <input type="number" name="stock" class="form-control" value="{{ product.stock|default:'0' }}" required>
+            </div>
+        </div>
+
+        <div class="row">
+    <div class="col-md-4 mb-3">
+        <label class="h4-style">Size Type</label>
+        <select name="size_type" class="form-select">
+            <option value="none" {% if product.size_type == 'none' or not product %}selected{% endif %}>No Size</option>
+            <option value="clothing" {% if product.size_type == 'clothing' %}selected{% endif %}>Clothing (S/M/L/XL)</option>
+            <option value="shoe" {% if product.size_type == 'shoe' %}selected{% endif %}>Shoe Size</option>
+        </select>
+    </div>
+    <div class="col-md-8 mb-3">
+        <label class="h4-style">Available Sizes (comma-separated)</label>
+        <input type="text" name="available_sizes" class="form-control"
+            placeholder="S,M,L,XL or 6,7,8,9,10"
+            value="{{ product.available_sizes|default:'' }}">
+    </div>
+</div>
+
+        <div class="mb-3">
+            <label class="h4-style">Product Images (multiple allowed)</label>
+            <input type="file" name="images" class="form-control" multiple>
+        </div>
+
+        {% if product and product.images.exists %}
+        <div class="mb-3">
+            <label class="h4-style">Existing Images</label>
+            <div class="d-flex gap-2 flex-wrap">
+                {% for img in product.images.all %}
+                <div class="position-relative">
+                    <img src="{{ img.image.url }}" class="dash-thumb-lg">
+                    <a href="{% url 'dashboard-product-image-delete' img.id %}" class="dash-img-remove" onclick="return confirm('Remove this image?')">×</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if product.is_active or not product %}checked{% endif %}>
+            <label class="form-check-label small-text" for="is_active">Active (visible on site)</label>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn-primary-custom">{% if product %}Update{% else %}Save{% endif %} Product</button>
+            <a href="{% url 'dashboard-product-list' %}" class="btn-cancel-address">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

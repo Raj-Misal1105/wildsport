@@ -1,0 +1,38 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Orders{% endblock %}
+{% block page_title %}Manage Orders{% endblock %}
+
+{% block dash_content %}
+<div class="d-flex justify-content-between mb-3">
+    <form method="get" class="d-flex gap-2">
+        <select name="status" class="form-select" onchange="this.form.submit()">
+            <option value="">All Status</option>
+            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>Confirmed</option>
+            <option value="shipped" {% if status_filter == 'shipped' %}selected{% endif %}>Shipped</option>
+            <option value="delivered" {% if status_filter == 'delivered' %}selected{% endif %}>Delivered</option>
+            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+    </form>
+</div>
+
+<div class="dash-box">
+    <table class="table dash-table">
+        <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+            {% for order in orders %}
+            <tr onclick="window.location.href='{% url 'dashboard-order-detail' order.id %}'" style="cursor:pointer;">
+                <td>{{ order.order_number }}</td>
+                <td>{{ order.user.username }}</td>
+                <td>{{ order.items.count }}</td>
+                <td>₹{{ order.total_amount }}</td>
+                <td><span class="status-pill status-{{ order.status }}">{{ order.status }}</span></td>
+                <td class="small-text">{{ order.created_at|date:"d M Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center small-text py-3">No orders found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

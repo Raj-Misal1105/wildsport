@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Details - WildSport{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <a href="{% url 'order-history' %}" class="small-text d-inline-block mb-3" style="color: var(--secondary);">
+        <i class="bi bi-arrow-left"></i> Back to Orders
+    </a>
+
+    <div id="alert-box"></div>
+
+    <div id="detail-loading" class="text-center py-5">
+        <div class="spinner-border" style="color: var(--primary);"></div>
+    </div>
+
+    <div id="order-detail-content" style="display:none;">
+
+        <div class="d-flex justify-content-between align-items-start flex-wrap mb-4">
+            <div>
+                <h1 id="order-number-title" style="font-size: 26px;"></h1>
+                <p class="small-text" id="order-date"></p>
+            </div>
+            <span class="order-status-badge" id="order-status-badge" style="font-size: 13px;"></span>
+        </div>
+
+        <div class="row g-4">
+
+            <div class="col-lg-8">
+                <div class="checkout-box mb-4">
+                    <h4 class="mb-3">Items</h4>
+                    <div id="order-items-list"></div>
+                </div>
+
+                <div class="checkout-box">
+                    <h4 class="mb-3">Delivery Address</h4>
+                    <p class="small-text mb-0" id="order-address"></p>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="checkout-box mb-4">
+                    <h4 class="mb-3">Order Summary</h4>
+                    <div class="d-flex justify-content-between mb-2 small-text">
+                        <span>Total Amount</span>
+                        <span class="price" id="order-total"></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small-text">
+                        <span>Payment Method</span>
+                        <span id="order-payment"></span>
+                    </div>
+                </div>
+
+                <button class="btn-cancel-order w-100" id="cancelOrderBtn" onclick="cancelOrder()">Cancel Order</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function getToken() { return localStorage.getItem('wildsport_token'); }
+function showAlert(message, type) {
+    document.getElementById('alert-box').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+}
+
+const statusColors = {
+    pending: '#F57C00', confirmed: '#1565C0', shipped: '#6DBE45',
+    delivered: '#0F4C3A', cancelled: '#DC2626'
+};
+
+const orderId = {{ order_id }};
+let currentOrderStatus = null;
+
+function loadOrderDetail() {
+    const token = getToken();
+    if (!token) {
+        showAlert('Please login to view this order.', 'warning');
+        setTimeout(openAuthModal, 500);
+        return;
+    }
+
+    fetch(`/api/orders/${orderId}/`, { headers: { 'Authorization': 'Token ' + token } })
+    .then(res => {
+        if (res.status === 404) throw new Error('not_found');
+        return res.json();
+    })
+    .then(order => {
+        document.getElementById('detail-loading').style.display = 'none';
+        document.getElementById('order-detail-content').style.display = 'block';
+
+        currentOrderStatus = order.status;
+
+        document.getElementById('order-number-title').textContent = order.order_number;
+        document.getElementById('order-date').textContent = 'Placed on ' + new Date(order.created_at).toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'});
+
+        const badge = document.getElementById('order-status-badge');
+        badge.textContent = order.status.toUpperCase();
+        badge.style.background = statusColors[order.status] || '#6B7280';
+
+        document.getElementById('order-items-list').innerHTML = order.items.map(item => {
+            const p = item.product_detail;
+            const img = (p && p.images.length > 0) ? p.images[0].image : 'https://via.placeholder.com/60x60?text=No+Image';
+            return `
+            <div class="checkout-item-row">
+                <img src="${img}" alt="${p ? p.name : 'Product'}">
+                <div class="flex-grow-1">
+                    <div class="small-text" style="font-weight:500; color: var(--text);">${p ? p.name : 'Product removed'}</div>
+                    <div class="small-text">Qty: ${item.quantity} × ₹${item.price_at_purchase}</div>
+                </div>
+                <div class="price small-text">₹${(item.quantity * item.price_at_purchase).toFixed(2)}</div>
+            </div>`;
+        }).join('');
+
+        document.getElementById('order-address').textContent = order.shipping_address;
+        document.getElementById('order-total').textContent = '₹' + order.total_amount;
+        document.getElementById('order-payment').textContent = order.payment_method;
+
+        const cancelBtn = document.getElementById('cancelOrderBtn');
+        if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
+            cancelBtn.style.display = 'none';
+        }
+    })
+    .catch((err) => {
+        document.getElementById('detail-loading').style.display = 'none';
+        if (err.message === 'not_found') {
+            showAlert('Order not found.', 'danger');
+        } else {
+            showAlert('Failed to load order.', 'danger');
+        }
+    });
+}
+
+function cancelOrder() {
+    if (!confirm('Are you sure you want to cancel this order?')) return;
+
+    fetch(`/api/orders/${orderId}/cancel/`, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Token ' + getToken() }
+    })
+    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+    .then(({ status, body }) => {
+        if (status === 200) {
+            showAlert('Order cancelled.', 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showAlert(body.error || 'Could not cancel order.', 'danger');
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadOrderDetail);
+</script>
+{% endblock %}

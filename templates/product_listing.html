@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Products - WildSport{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Breadcrumb -->
+    <nav class="small-text mb-3">
+        <a href="{% url 'home' %}" style="color:#6B7280;">Home</a> /
+        <span style="color: var(--text);">Products</span>
+        {% if search_query %} for "<strong>{{ search_query }}</strong>"{% endif %}
+    </nav>
+
+    <div class="row g-4">
+
+        <!-- Sidebar Filters -->
+        <!-- Sidebar Filters -->
+            <div class="col-lg-3">
+
+                <!-- Mobile-only Filter trigger button -->
+                <button class="filter-trigger-btn d-lg-none w-100 mb-3" type="button"
+                        data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas" aria-controls="filterOffcanvas">
+                    <i class="bi bi-funnel"></i> Filters & Sort
+                </button>
+
+                <div class="offcanvas-lg offcanvas-start filter-sidebar" tabindex="-1" id="filterOffcanvas">
+                    <div class="offcanvas-header d-lg-none">
+                        <h5 class="offcanvas-title">Filters</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterOffcanvas"></button>
+                    </div>
+                    <div class="offcanvas-body">
+                        <form method="get" action="{% url 'product-listing' %}">
+                            {% if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
+
+                            <!-- Category Filter -->
+                            <div class="filter-block">
+                                <h4>Category</h4>
+                                {% for cat in categories %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="category" value="{{ cat.slug }}"
+                                        id="cat-{{ cat.id }}" {% if selected_category == cat.slug %}checked{% endif %}
+                                        onchange="this.form.submit()">
+                                    <label class="form-check-label" for="cat-{{ cat.id }}">{{ cat.name }}</label>
+                                </div>
+                                {% endfor %}
+                                {% if selected_category %}
+                                <a href="{% url 'product-listing' %}" class="small-text" style="color: var(--secondary);">Clear category</a>
+                                {% endif %}
+                            </div>
+
+                            <hr>
+
+                            <!-- Price Filter -->
+                            <div class="filter-block">
+                                <h4>Price Range</h4>
+                                <div class="d-flex gap-2 mb-2">
+                                    <input type="number" name="min_price" class="form-control form-control-sm" placeholder="Min" value="{{ request.GET.min_price }}">
+                                    <input type="number" name="max_price" class="form-control form-control-sm" placeholder="Max" value="{{ request.GET.max_price }}">
+                                </div>
+                                <button type="submit" class="btn btn-sm w-100" style="background: var(--primary); color: #fff;">Apply</button>
+                            </div>
+
+                            <hr>
+
+                            <!-- Brand Filter -->
+                            <div class="filter-block">
+                                <h4>Brand</h4>
+                                {% for b in all_brands %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="brand" value="{{ b }}"
+                                        id="brand-{{ forloop.counter }}"
+                                        {% if b in selected_brands %}checked{% endif %}
+                                        onchange="this.form.submit()">
+                                    <label class="form-check-label" for="brand-{{ forloop.counter }}">{{ b }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <hr>
+
+                            <!-- Rating Filter -->
+                            <div class="filter-block">
+                                <h4>Rating</h4>
+                                {% for r in "4321" %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="rating" value="{{ r }}"
+                                        id="rating-{{ r }}"
+                                        {% if request.GET.rating == r %}checked{% endif %}
+                                        onchange="this.form.submit()">
+                                    <label class="form-check-label" for="rating-{{ r }}">
+                                        {{ r }}<i class="bi bi-star-fill" style="color: var(--accent); font-size: 12px;"></i> & above
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Products Grid -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <span class="small-text">{{ products.paginator.count }} products found</span>
+
+                <form method="get" class="d-flex align-items-center gap-2">
+                    {% if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
+                    {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+                    <label class="small-text mb-0">Sort by:</label>
+                    <select name="sort" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                        <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest</option>
+                        <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="popularity" {% if current_sort == 'popularity' %}selected{% endif %}>Popularity</option>
+                    </select>
+                </form>
+            </div>
+
+            <div class="row g-4">
+                {% for product in products %}
+                <div class="col-6 col-md-4">
+                    <div class="product-card">
+                        <a href="{% url 'product-detail' product.slug %}" class="text-decoration-none">
+                            <div class="product-img-wrap">
+                                {% if product.images.first %}
+                                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/200x200?text=No+Image" alt="No image">
+                                {% endif %}
+                                <span class="wishlist-icon"><i class="bi bi-heart"></i></span>
+                                {% if product.discount_price %}
+                                <span class="discount-badge">SALE</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <div class="product-info">
+                            <div class="product-brand">{{ product.brand }}</div>
+                            <a href="#" class="text-decoration-none">
+                                <div class="product-name">{{ product.name }}</div>
+                            </a>
+                            <div class="product-rating"><i class="bi bi-star-fill"></i> {{ product.rating_avg }}</div>
+                            <div class="product-price-row">
+                                <span class="price product-price-current">₹{{ product.discount_price|default:product.price }}</span>
+                                {% if product.discount_price %}
+                                <span class="product-price-old">₹{{ product.price }}</span>
+                                {% endif %}
+                            </div>
+                            <button class="btn-cart-custom" onclick="addToCart({{ product.id }})">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-search" style="font-size: 40px; color: var(--border);"></i>
+                    <p class="mt-2">Koi product nahi mila in filters ke saath.</p>
+                    <a href="{% url 'product-listing' %}" class="btn-primary-custom">Clear Filters</a>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if products.paginator.num_pages > 1 %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if products.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in products.paginator.page_range %}
+                    <li class="page-item {% if products.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if products.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ products.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<div id="alert-box"></div>
+
+<script>
+function getToken() { return localStorage.getItem('wildsport_token'); }
+
+function showAlert(message, type) {
+    const box = document.getElementById('alert-box');
+    box.innerHTML = `<div class="alert alert-${type} position-fixed top-0 end-0 m-3" style="z-index:2000;">${message}</div>`;
+    setTimeout(() => { box.innerHTML = ''; }, 3000);
+}
+
+function addToCart(productId) {
+    const token = getToken();
+    if (!token) {
+        openAuthModal();
+        return;
+    }
+
+    fetch('/api/cart/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + token
+        },
+        body: JSON.stringify({ product: productId, quantity: 1 })
+    })
+    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+    .then(({ status, body }) => {
+        if (status === 201) {
+            showAlert('Added to cart successfully!', 'success');
+        } else {
+            showAlert(body.error || 'Something went wrong.', 'danger');
+        }
+    })
+    .catch(() => showAlert('Network error, please try again.', 'danger'));
+}
+</script>
+{% endblock %}

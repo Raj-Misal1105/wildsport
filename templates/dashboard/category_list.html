@@ -1,0 +1,32 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Categories{% endblock %}
+{% block page_title %}Manage Categories{% endblock %}
+
+{% block dash_content %}
+<div class="d-flex justify-content-between mb-3">
+    <span class="small-text">{{ categories.count }} categories</span>
+    <a href="{% url 'dashboard-category-add' %}" class="btn-primary-custom"><i class="bi bi-plus-circle"></i> Add Category</a>
+</div>
+
+<div class="dash-box">
+    <table class="table dash-table">
+        <thead><tr><th>Icon</th><th>Name</th><th>Slug</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td>{% if cat.icon %}<img src="{{ cat.icon.url }}" class="dash-thumb">{% else %}—{% endif %}</td>
+                <td>{{ cat.name }}</td>
+                <td class="small-text">{{ cat.slug }}</td>
+                <td><span class="status-pill {% if cat.is_active %}status-delivered{% else %}status-cancelled{% endif %}">{% if cat.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                <td>
+                    <a href="{% url 'dashboard-category-edit' cat.id %}" class="dash-action-btn"><i class="bi bi-pencil"></i></a>
+                    <a href="{% url 'dashboard-category-delete' cat.id %}" class="dash-action-btn text-danger" onclick="return confirm('Delete this category?')"><i class="bi bi-trash"></i></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center small-text py-3">No categories yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

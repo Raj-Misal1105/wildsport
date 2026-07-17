@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - WildSport{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">My Profile</h1>
+    <div id="alert-box"></div>
+
+    <div id="profile-loading" class="text-center py-5">
+        <div class="spinner-border" style="color: var(--primary);"></div>
+    </div>
+
+    <div id="profile-content" style="display:none;">
+        <div class="row g-4">
+
+            <!-- Sidebar -->
+            <div class="col-lg-3">
+                <div class="profile-sidebar">
+                    <div class="profile-avatar-circle" id="avatarInitial">U</div>
+                    <h4 class="text-center mt-2 mb-0" id="sidebar-username"></h4>
+                    <p class="small-text text-center" id="sidebar-email"></p>
+                    <hr>
+                    <ul class="profile-nav">
+                        <li class="active"><i class="bi bi-person"></i> My Profile</li>
+                        <li onclick="window.location.href='{% url 'order-history' %}'"><i class="bi bi-bag-check"></i> My Orders</li>
+                        <li onclick="window.location.href='{% url 'cart' %}'"><i class="bi bi-cart3"></i> My Cart</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="col-lg-9">
+                <div class="checkout-box mb-4">
+                    <h4 class="mb-3">Personal Information</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="h4-style">Username</label>
+                            <input type="text" id="p-username" class="form-control" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="h4-style">Email</label>
+                            <input type="email" id="p-email" class="form-control" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="h4-style">First Name</label>
+                            <input type="text" id="p-firstname" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="h4-style">Last Name</label>
+                            <input type="text" id="p-lastname" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="h4-style">Phone</label>
+                            <input type="text" id="p-phone" class="form-control" placeholder="Phone number">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="h4-style">City</label>
+                            <input type="text" id="p-city" class="form-control" placeholder="City">
+                        </div>
+                    </div>
+                    <button class="btn-primary-custom" onclick="saveProfile()">SAVE CHANGES</button>
+                </div>
+
+                <!-- Saved Addresses -->
+                <div class="checkout-box">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">Saved Addresses</h4>
+                        <span class="small-text" style="color: var(--secondary);">Manage from Checkout page</span>
+                    </div>
+                    <div id="profile-address-list"></div>
+                    <div id="profile-no-address" style="display:none;" class="small-text py-2">
+                        No saved addresses yet.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function getToken() { return localStorage.getItem('wildsport_token'); }
+function showAlert(message, type) {
+    document.getElementById('alert-box').innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    setTimeout(() => { document.getElementById('alert-box').innerHTML = ''; }, 3000);
+}
+
+function loadProfile() {
+    const token = getToken();
+    if (!token) {
+        document.getElementById('profile-loading').style.display = 'none';
+        showAlert('Please login to view your profile.', 'warning');
+        setTimeout(openAuthModal, 500);
+        return;
+    }
+
+    fetch('/api/auth/profile/', { headers: { 'Authorization': 'Token ' + token } })
+    .then(res => res.json())
+    .then(profile => {
+        document.getElementById('profile-loading').style.display = 'none';
+        document.getElementById('profile-content').style.display = 'block';
+
+        const username = localStorage.getItem('wildsport_username') || '';
+        document.getElementById('sidebar-username').textContent = username;
+        document.getElementById('avatarInitial').textContent = username.charAt(0).toUpperCase();
+
+        document.getElementById('p-username').value = username;
+        document.getElementById('p-email').value = profile.email || '';
+        document.getElementById('sidebar-email').textContent = profile.email || '';
+        document.getElementById('p-firstname').value = profile.first_name || '';
+        document.getElementById('p-lastname').value = profile.last_name || '';
+        document.getElementById('p-phone').value = profile.phone || '';
+        document.getElementById('p-city').value = profile.city || '';
+    })
+    .catch(() => {
+        document.getElementById('profile-loading').style.display = 'none';
+        showAlert('Failed to load profile.', 'danger');
+    });
+}
+
+function saveProfile() {
+    const payload = {
+        first_name: document.getElementById('p-firstname').value,
+        last_name: document.getElementById('p-lastname').value,
+        phone: document.getElementById('p-phone').value,
+        city: document.getElementById('p-city').value
+    };
+
+    fetch('/api/auth/profile/', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + getToken()
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json().then(data => ({ status: res.status, body: data })))
+    .then(({ status }) => {
+        if (status === 200) {
+            showAlert('Profile updated successfully!', 'success');
+        } else {
+            showAlert('Could not update profile.', 'danger');
+        }
+    })
+    .catch(() => showAlert('Network error, please try again.', 'danger'));
+}
+
+
+function loadProfileAddresses() {
+    fetch('/api/auth/addresses/', { headers: { 'Authorization': 'Token ' + getToken() } })
+    .then(res => res.json())
+    .then(addresses => {
+        const container = document.getElementById('profile-address-list');
+        const noAddr = document.getElementById('profile-no-address');
+
+        if (!addresses || addresses.length === 0) {
+            noAddr.style.display = 'block';
+            return;
+        }
+
+        container.innerHTML = addresses.map(addr => `
+            <div class="address-card" style="cursor:default;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>${addr.full_name}</strong>
+                        ${addr.is_default ? '<span class="default-badge">Default</span>' : ''}
+                        <p class="small-text mb-1 mt-1">${addr.address_line}, ${addr.city}, ${addr.state} - ${addr.pincode}</p>
+                        <p class="small-text mb-0">Phone: ${addr.phone}</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadProfile();
+    loadProfileAddresses();
+});
+</script>
+{% endblock %}

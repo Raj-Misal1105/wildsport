@@ -1,0 +1,39 @@
+{% extends 'dashboard/base_dashboard.html' %}
+{% block title %}Products{% endblock %}
+{% block page_title %}Manage Products{% endblock %}
+
+{% block dash_content %}
+<div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+    <form method="get" class="d-flex gap-2">
+        <input type="text" name="search" class="form-control" placeholder="Search products..." value="{{ search }}">
+        <button type="submit" class="btn-cancel-address">Search</button>
+    </form>
+    <a href="{% url 'dashboard-product-add' %}" class="btn-primary-custom"><i class="bi bi-plus-circle"></i> Add Product</a>
+</div>
+
+<div class="dash-box">
+    <table class="table dash-table">
+        <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{% if product.images.first %}<img src="{{ product.images.first.image.url }}" class="dash-thumb">{% else %}—{% endif %}</td>
+                <td>{{ product.name }}</td>
+                <td class="small-text">{% for cat in product.categories.all %}{{ cat.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <td>₹{{ product.discount_price|default:product.price }}</td>
+                <td>
+                    {% if product.stock <= 5 %}<span class="text-danger">{{ product.stock }}</span>{% else %}{{ product.stock }}{% endif %}
+                </td>
+                <td><span class="status-pill {% if product.is_active %}status-delivered{% else %}status-cancelled{% endif %}">{% if product.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                <td>
+                    <a href="{% url 'dashboard-product-edit' product.id %}" class="dash-action-btn"><i class="bi bi-pencil"></i></a>
+                    <a href="{% url 'dashboard-product-delete' product.id %}" class="dash-action-btn text-danger" onclick="return confirm('Delete this product?')"><i class="bi bi-trash"></i></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center small-text py-3">No products found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

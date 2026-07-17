@@ -36,7 +36,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
         )
-        UserProfile.objects.create(user=user)   # register ke time hi profile bhi ban jayegi
+        UserProfile.objects.create(user=user)   
         return user
 
 

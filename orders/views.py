@@ -22,7 +22,7 @@ def checkout(request):
     if not cart_items.exists():
         return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-    # stock check pehle sab items ka
+    
     for item in cart_items:
         if item.product.stock < item.quantity:
             return Response(
@@ -30,7 +30,7 @@ def checkout(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    with transaction.atomic():   # sab ek saath ho, beech mein kuch fail ho to sab rollback
+    with transaction.atomic():   
         order = Order.objects.create(
             user=request.user,
             total_amount=cart.total_price,
@@ -47,11 +47,11 @@ def checkout(request):
                 price_at_purchase=price,
                 selected_size=item.selected_size
             )
-            # stock ghatao
+            
             item.product.stock -= item.quantity
             item.product.save()
 
-        cart_items.delete()   # order place hote hi cart khali
+        cart_items.delete()   
 
     return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
@@ -83,7 +83,7 @@ def cancel_order(request, order_id):
     order.status = 'cancelled'
     order.save()
 
-    # stock wapas add karo
+    
     for item in order.items.all():
         if item.product:
             item.product.stock += item.quantity

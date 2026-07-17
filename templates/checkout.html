@@ -133,7 +133,7 @@ function showAlert(message, type) {
 
 let selectedAddressId = null;
 
-// ---------------- LOAD CART ----------------
+
 function loadCheckout() {
     const token = getToken();
     if (!token) {
@@ -183,7 +183,7 @@ function renderCheckoutItems(items) {
     }).join('');
 }
 
-// ---------------- ADDRESSES ----------------
+
 function loadAddresses() {
     fetch('/api/auth/addresses/', { headers: { 'Authorization': 'Token ' + getToken() } })
     .then(res => res.json())
@@ -199,7 +199,7 @@ function loadAddresses() {
 
         noAddrMsg.style.display = 'none';
 
-        // default address ko pehle select karo, warna pehla wala
+       
         const defaultAddr = addresses.find(a => a.is_default) || addresses[0];
         selectedAddressId = defaultAddr.id;
 
@@ -298,14 +298,14 @@ function deleteAddress(id) {
     });
 }
 
-// ---------------- PLACE ORDER ----------------
+
 function placeOrder() {
     if (!selectedAddressId) {
         showAlert('Please select or add a delivery address.', 'warning');
         return;
     }
 
-    // selected address ka full data DOM se nikal lo
+    
     const card = document.getElementById('addr-card-' + selectedAddressId);
     const addressText = card.querySelector('p:first-of-type').textContent;
     const phoneText = card.querySelector('p:last-of-type').textContent;

@@ -20,10 +20,10 @@ def product_listing_view(request):
     products = Product.objects.filter(is_active=True)
     categories = Category.objects.filter(is_active=True, parent=None)
 
-    # ---- filters (query params se) ----
+ 
     search = request.GET.get('search')
     category_slug = request.GET.get('category')
-    brand = request.GET.getlist('brand')          # multiple brands select ho sakti hai
+    brand = request.GET.getlist('brand')         
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
     min_rating = request.GET.get('rating')
@@ -54,7 +54,7 @@ def product_listing_view(request):
     else:
         products = products.order_by('-created_at')
 
-    # ---- available brands (sidebar filter ke liye) ----
+
     all_brands = Product.objects.filter(is_active=True).values_list('brand', flat=True).distinct()
 
     # ---- pagination ----
@@ -86,7 +86,7 @@ def product_detail_view(request, slug):
     context = {
         'product': product,
         'related_products': related_products,
-        'sizes_list': sizes_list,   # naya
+        'sizes_list': sizes_list,   
     }
     return render(request, 'product_detail.html', context)
 

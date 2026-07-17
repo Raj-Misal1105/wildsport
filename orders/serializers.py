@@ -24,6 +24,6 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class CheckoutSerializer(serializers.Serializer):
-    """Sirf checkout request validate karne ke liye — actual Order/OrderItem creation view mein hoga"""
+    
     shipping_address = serializers.CharField()
     payment_method = serializers.ChoiceField(choices=[('COD', 'Cash on Delivery')], default='COD')

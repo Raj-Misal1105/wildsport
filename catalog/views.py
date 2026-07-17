@@ -38,7 +38,7 @@ def category_detail(request, slug):
         serializer = CategorySerializer(category)
         return Response(serializer.data)
 
-    # PUT/PATCH/DELETE -> sirf admin
+    # PUT/PATCH/DELETE 
     if not request.user.is_staff:
         return Response({"error": "Only admin can modify category"}, status=status.HTTP_403_FORBIDDEN)
 
@@ -102,7 +102,7 @@ def product_list_create(request):
             "results": serializer.data
         })
 
-    # POST -> sirf admin
+   
     if not request.user.is_staff:
         return Response({"error": "Only admin can create product"}, status=status.HTTP_403_FORBIDDEN)
 
@@ -135,7 +135,7 @@ def product_detail(request, slug):
     return Response(serializer.data)
 
 
-# ---------------- PRODUCT IMAGE (upload alag se) ----------------
+# ---------------- PRODUCT IMAGE  ----------------
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticatedOrReadOnly])

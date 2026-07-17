@@ -280,12 +280,13 @@ Similarly, near the top of the file, for local development:
 
 - **Comment out** the current active line:
   ```python
-  SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-sydcalxwvpc&v_!i&y24l2-ht$-wz=gu4qm0deg7*q)p2kr=0r')
+  DEBUG = os.environ.get('DEBUG', 'False') == 'True'
   ...
   ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
   ```
 - **Uncomment** the simpler local-dev version:
   ```python
+  # DEBUG = True
   # ALLOWED_HOSTS = ["*"]
   ```
 
